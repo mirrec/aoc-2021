@@ -1,21 +1,31 @@
-# Aoc
+# Advent of Code 2021
 
-**TODO: Add description**
+https://adventofcode.com/2021
+
+## Requirements
+
+* elixir 1.12
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `aoc` to your list of dependencies in `mix.exs`:
+* clone repository: `git clone git@github.com:mirrec/aoc-2021.git`
+* install dependencies `mix deps.get`
+* run test to verify that everything runs as expected `mix test`
+
+## Days
+
+### Day 1
+
+Example input
 
 ```elixir
-def deps do
-  [
-    {:aoc, "~> 0.1.0"}
-  ]
-end
+Day1.example_input() |> Day1.count_simple_increasing() # => 7
+Day1.example_input() |> Day1.count_batches_increasing() # => 5
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/aoc](https://hexdocs.pm/aoc).
+File stream input
 
+```elixir
+Day1.file_stream() |> Day1.count_simple_increasing() # => :)
+Day1.file_stream() |> Day1.count_batches_increasing() # => :)
+```
