@@ -29,3 +29,19 @@ File stream input
 Day1.file_stream() |> Day1.count_simple_increasing() # => :)
 Day1.file_stream() |> Day1.count_batches_increasing() # => :)
 ```
+
+### Day 2
+
+Example input
+
+```elixir
+Day2.example_input() |> Day2.count_simple() # => %{horizontal: 15, depth: 10, result: 150}
+Day2.example_input() |> Day2.count_with_aim() # => {%Day2.PositionAim{horizontal: 15, depth: 60, aim: 10}, 900}
+```
+
+File stream input
+
+```elixir
+Day2.file_stream() |> Day2.count_simple() # => :)
+Day2.file_stream() |> Day2.count_with_aim() # => :)
+```
