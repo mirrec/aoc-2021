@@ -62,7 +62,7 @@ defmodule Aoc.Day4Test do
     test "main example" do
       result =
         Day4.example_input()
-        |> Day4.main()
+        |> Day4.main_part_1()
 
       assert result == [4512]
     end

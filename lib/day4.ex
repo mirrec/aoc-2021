@@ -1,13 +1,23 @@
 defmodule Aoc.Day4 do
   defmodule Board do
-    defstruct [:rows, :drawn_row_map, :drawn_column_map, :draws_sum]
+    defstruct [:rows, :drawn_row_map, :drawn_column_map, :draws_sum, :done]
 
     def board_size do
       5
     end
 
     def new(rows) do
-      %__MODULE__{rows: rows, drawn_row_map: %{}, drawn_column_map: %{}, draws_sum: 0}
+      %__MODULE__{
+        rows: rows,
+        drawn_row_map: %{},
+        drawn_column_map: %{},
+        draws_sum: 0,
+        done: false
+      }
+    end
+
+    def draw(%__MODULE__{done: true} = current, _) do
+      current
     end
 
     def draw(%__MODULE__{} = current, drawn_number) do
@@ -34,16 +44,16 @@ defmodule Aoc.Day4 do
 
           case {drawn_in_row, drawn_in_column} do
             {^size, _} ->
-              {:bingo, new_current, :row, row_index}
+              {:bingo, %{new_current | done: true}, :row, row_index}
 
             {_, ^size} ->
-              {:bingo, new_current, :column, column_index}
+              {:bingo, %{new_current | done: true}, :column, column_index}
 
             _ ->
               new_current
           end
 
-        _ ->
+        false ->
           current
       end
     end
@@ -101,7 +111,7 @@ defmodule Aoc.Day4 do
     end
   end
 
-  def main(string_input) do
+  def main_part_1(string_input) do
     {draws, boards} = parse_input(string_input)
 
     winners =
@@ -111,7 +121,7 @@ defmodule Aoc.Day4 do
         fn number, acc ->
           case acc do
             {nil, boards} ->
-              case draw_step(number, boards) do
+              case draw_step_first_winner(number, boards) do
                 {[], new_boards} ->
                   {:cont, {nil, new_boards}}
 
@@ -128,7 +138,7 @@ defmodule Aoc.Day4 do
     winners
   end
 
-  defp draw_step(number, boards) do
+  defp draw_step_first_winner(number, boards) do
     {winners, new_boards} =
       Enum.reduce(
         boards,
