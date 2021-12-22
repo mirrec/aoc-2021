@@ -128,9 +128,6 @@ defmodule Aoc.Day4 do
                 {winners, _} ->
                   {:halt, winners}
               end
-
-            {winners, _} ->
-              {:halt, winners}
           end
         end
       )
@@ -155,6 +152,33 @@ defmodule Aoc.Day4 do
       )
 
     {Enum.reverse(winners), Enum.reverse(new_boards)}
+  end
+
+  def main_part_2(string_input) do
+    {draws, boards} = parse_input(string_input)
+
+    winners =
+      Enum.reduce_while(
+        draws,
+        {length(boards), boards},
+        fn number, acc ->
+          case acc do
+            {pending_winners_count, boards} ->
+              case draw_step_first_winner(number, boards) do
+                {winners_scores, new_boards} ->
+                  case pending_winners_count - length(winners_scores) do
+                    0 ->
+                      {:halt, winners_scores}
+
+                    new_pending ->
+                      {:cont, {new_pending, new_boards}}
+                  end
+              end
+          end
+        end
+      )
+
+    winners
   end
 
   defp parse_input(string_input) do
