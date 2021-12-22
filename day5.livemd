@@ -1,0 +1,235 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Day 5
+
+## Setup
+
+```elixir
+Mix.install([
+  {:kino, github: "livebook-dev/kino"}
+])
+```
+
+```output
+:ok
+```
+
+```elixir
+example_input = """
+0,9 -> 5,9
+8,0 -> 0,8
+9,4 -> 3,4
+2,2 -> 2,1
+7,0 -> 7,4
+6,4 -> 2,0
+0,9 -> 2,9
+3,4 -> 1,4
+0,0 -> 8,8
+5,5 -> 8,2
+"""
+```
+
+```output
+"0,9 -> 5,9\n8,0 -> 0,8\n9,4 -> 3,4\n2,2 -> 2,1\n7,0 -> 7,4\n6,4 -> 2,0\n0,9 -> 2,9\n3,4 -> 1,4\n0,0 -> 8,8\n5,5 -> 8,2\n"
+```
+
+```elixir
+file_input = Kino.Input.textarea("File input:")
+```
+
+## Parsing
+
+```elixir
+parse_point = fn string_points ->
+  [x | [y]] =
+    string_points
+    |> String.split(",")
+    |> Enum.map(&String.to_integer/1)
+
+  {x, y}
+end
+
+parse_line = fn string_line ->
+  [from | [to]] =
+    String.split(string_line, " -> ")
+    |> Enum.map(parse_point)
+
+  {from, to}
+end
+
+example_lines =
+  example_input
+  |> String.split("\n", trim: true)
+  |> Enum.map(parse_line)
+
+file_lines =
+  Kino.Input.read(file_input)
+  |> String.split("\n", trim: true)
+  |> Enum.map(parse_line)
+```
+
+```output
+[
+  {{456, 846}, {221, 846}},
+  {{980, 926}, {73, 19}},
+  {{682, 930}, {562, 930}},
+  {{766, 592}, {274, 100}},
+  {{247, 685}, {247, 21}},
+  {{106, 800}, {635, 800}},
+  {{953, 340}, {135, 340}},
+  {{293, 223}, {293, 12}},
+  {{454, 196}, {454, 463}},
+  {{886, 766}, {164, 766}},
+  {{592, 590}, {192, 590}},
+  {{436, 982}, {436, 545}},
+  {{731, 571}, {420, 260}},
+  {{741, 11}, {466, 11}},
+  {{727, 541}, {579, 541}},
+  {{341, 553}, {25, 553}},
+  {{942, 470}, {942, 196}},
+  {{203, 600}, {203, 647}},
+  {{965, 595}, {949, 611}},
+  {{554, 306}, {554, 401}},
+  {{902, 438}, {902, 728}},
+  {{864, 609}, {525, 270}},
+  {{187, 790}, {187, 323}},
+  {{956, 950}, {427, 950}},
+  {{847, 554}, {422, 554}},
+  {{935, 900}, {701, 900}},
+  {{192, 854}, {866, 180}},
+  {{512, 946}, {543, 915}},
+  {{978, 979}, {491, 979}},
+  {{708, 61}, {708, 878}},
+  {{738, 508}, {282, 52}},
+  {{23, 25}, {841, 843}},
+  {{204, 750}, {204, 797}},
+  {{703, 500}, {703, 419}},
+  {{14, 311}, {694, 311}},
+  {{646, 301}, {785, 301}},
+  {{397, 168}, {439, 168}},
+  {{680, 931}, {561, 812}},
+  {{540, 448}, {90, 448}},
+  {{706, 668}, {91, 53}},
+  {{848, 319}, {318, 319}},
+  {{198, 948}, {198, 307}},
+  {{686, 58}, {686, 541}},
+  {{867, 234}, {867, 498}},
+  {{134, 125}, {134, 688}},
+  {{824, 566}, {53, 566}},
+  {{437, 167}, {276, ...}},
+  {{94, ...}, {...}},
+  {{...}, ...},
+  {...},
+  ...
+]
+```
+
+## Part 1
+
+```elixir
+defmodule Grid do
+  def new() do
+    %{}
+  end
+
+  def add_point(%{} = grid, {x, y}) do
+    column = Map.get(grid, x, %{})
+    column_value = Map.get(column, y, 0)
+    new_column = Map.put(column, y, column_value + 1)
+    Map.put(grid, x, new_column)
+  end
+
+  # horizontal
+  def add_line(%{} = grid, {{x1, y1}, {x2, y2}}) when x1 == x2 do
+    Enum.reduce(y1..y2, grid, fn current_y, acc ->
+      Grid.add_point(acc, {x1, current_y})
+    end)
+  end
+
+  # vertical
+  def add_line(%{} = grid, {{x1, y1}, {x2, y2}}) when y1 == y2 do
+    Enum.reduce(x1..x2, grid, fn current_x, acc ->
+      Grid.add_point(acc, {current_x, y1})
+    end)
+  end
+
+  # diagonal
+  def add_line(%{} = grid, {{x1, y1}, {x2, y2}}) when abs(x1 - x2) == abs(y1 - y2) do
+    steps = abs(x1 - x2)
+
+    count_next_value = fn step, v1, v2 ->
+      if v1 < v2 do
+        v1 + step
+      else
+        v1 - step
+      end
+    end
+
+    Enum.reduce(0..steps, grid, fn step, acc ->
+      x = count_next_value.(step, x1, x2)
+      y = count_next_value.(step, y1, y2)
+
+      Grid.add_point(acc, {x, y})
+    end)
+
+    # Enum.reduce(x1..x2, grid, fn current_x, acc ->
+    #   
+    # end)
+  end
+
+  def count_hot_spots(%{} = grid, hot_spot) do
+    Enum.reduce(grid, 0, fn {_, colums}, acc ->
+      sum =
+        Map.values(colums)
+        |> Enum.count(fn val -> val >= hot_spot end)
+
+      sum + acc
+    end)
+  end
+
+  def draw(%{} = grid) do
+    max_x = Enum.max(Map.keys(grid))
+    max_y = Enum.max(Enum.map(grid, fn {_, columns} -> Enum.max(Map.keys(columns)) end))
+
+    Enum.map(0..max_y, fn y ->
+      Enum.map(0..max_x, fn x ->
+        Map.get(grid, x, %{})
+        |> Map.get(y, ".")
+        |> to_string
+      end)
+    end)
+    |> Enum.join("\n")
+    |> IO.puts()
+
+    grid
+  end
+end
+
+horizontal_or_vertical = fn {{x1, y1}, {x2, y2}} -> x1 == x2 || y1 == y2 end
+
+example_lines
+|> Enum.filter(horizontal_or_vertical)
+|> Enum.reduce(%{}, fn line, acc ->
+  Grid.add_line(acc, line)
+end)
+# |> Grid.draw()
+|> Grid.count_hot_spots(2)
+```
+
+```output
+5
+```
+
+## Part 2
+
+```elixir
+file_lines
+|> Enum.reduce(%{}, fn line, acc ->
+  Grid.add_line(acc, line)
+end)
+|> Grid.count_hot_spots(2)
+```
+
+```output
+16716
+```
