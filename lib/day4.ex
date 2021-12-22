@@ -1,12 +1,16 @@
 defmodule Aoc.Day4 do
   defmodule Board do
-    defstruct [:rows, :drawn_row_map, :drawn_column_map, :draws_sum, :size]
+    defstruct [:rows, :drawn_row_map, :drawn_column_map, :draws_sum]
 
-    def new(rows) do
-      %__MODULE__{rows: rows, drawn_row_map: %{}, drawn_column_map: %{}, draws_sum: 0, size: 5}
+    def board_size do
+      5
     end
 
-    def draw(%__MODULE__{size: size} = current, drawn_number) do
+    def new(rows) do
+      %__MODULE__{rows: rows, drawn_row_map: %{}, drawn_column_map: %{}, draws_sum: 0}
+    end
+
+    def draw(%__MODULE__{} = current, drawn_number) do
       case find_number(current, drawn_number) do
         {true, {row_index, column_index}} ->
           {new_row_map, row_index, drawn_in_row} =
@@ -25,6 +29,8 @@ defmodule Aoc.Day4 do
               drawn_row_map: new_row_map,
               drawn_column_map: new_column_map
           }
+
+          size = board_size()
 
           case {drawn_in_row, drawn_in_column} do
             {^size, _} ->
@@ -157,15 +163,9 @@ defmodule Aoc.Day4 do
   end
 
   defp parse_boards(string_input) do
-    all_lines =
-      string_input
-      |> Enum.map(&parse_board_line/1)
-
-    board_size =
-      List.first(all_lines)
-      |> length
-
-    Enum.chunk_every(all_lines, board_size)
+    string_input
+    |> Enum.map(&parse_board_line/1)
+    |> Enum.chunk_every(Aoc.Day4.Board.board_size())
     |> Enum.map(&Aoc.Day4.Board.new/1)
   end
 
