@@ -1,0 +1,134 @@
+<!-- vim: syntax=markdown -->
+
+<!-- livebook:{"persist_outputs":true} -->
+
+# Day 6
+
+## Setup
+
+<!-- vim: syntax=markdown -->
+
+```elixir
+Mix.install([
+  {:kino, github: "livebook-dev/kino"}
+])
+```
+
+```output
+:ok
+```
+
+```elixir
+example_input = """
+3,4,3,1,2
+"""
+```
+
+```output
+"3,4,3,1,2\n"
+```
+
+```elixir
+file_input = Kino.Input.textarea("Please fill in")
+```
+
+## Parsing
+
+```elixir
+parse_input = fn input ->
+  input
+  |> String.split(",")
+  |> Enum.map(&String.trim/1)
+  |> Enum.map(&String.to_integer/1)
+end
+
+example_population = parse_input.(example_input)
+
+file_population = parse_input.(Kino.Input.read(file_input))
+```
+
+```output
+[1, 1, 5, 2, 1, 1, 5, 5, 3, 1, 1, 1, 1, 1, 1, 3, 4, 5, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 5,
+ 4, 5, 1, 5, 3, 1, 3, 2, 1, 1, 1, 1, 2, 4, 1, 5, 1, ...]
+```
+
+## Part 1
+
+```elixir
+defmodule Aquarium do
+  def new() do
+    Enum.map(0..8, fn i -> {i, 0} end)
+    |> Enum.into(%{})
+  end
+
+  def bump_count(%{} = current, day, diff \\ 1) do
+    Map.update!(current, day, fn val -> val + diff end)
+  end
+
+  def simulate_day(%{} = current) do
+    new_generation = Map.fetch!(current, 0)
+
+    {_, next_aquarium} =
+      Enum.reduce(8..0, {new_generation, current}, fn day, {new_number, acc} ->
+        Map.get_and_update!(acc, day, fn current_value ->
+          {current_value, new_number}
+        end)
+      end)
+
+    bump_count(next_aquarium, 6, new_generation)
+  end
+
+  def count(%{} = current) do
+    Map.values(current)
+    |> Enum.sum()
+  end
+
+  def debug(%{} = current) do
+    val1 = count(current)
+
+    val2 =
+      Map.values(current)
+      |> Enum.join(",")
+
+    IO.inspect({val1, val2})
+
+    current
+  end
+end
+
+aquarium =
+  file_population
+  |> Enum.reduce(Aquarium.new(), fn day, acc ->
+    Aquarium.bump_count(acc, day)
+  end)
+
+Enum.reduce(1..80, aquarium, fn _, acc ->
+  Aquarium.simulate_day(acc)
+end)
+|> Aquarium.debug()
+
+Enum.reduce(1..256, aquarium, fn _, acc ->
+  Aquarium.simulate_day(acc)
+end)
+|> Aquarium.debug()
+```
+
+```output
+{372300, "19003,53176,26723,52392,44369,43764,70734,19355,42784"}
+{1675781200288,
+ "142449524817,172771620298,178520098022,194398687617,224466608964,220680256911,274588469564,118008761299,149897172796"}
+```
+
+```output
+%{
+  0 => 142449524817,
+  1 => 172771620298,
+  2 => 178520098022,
+  3 => 194398687617,
+  4 => 224466608964,
+  5 => 220680256911,
+  6 => 274588469564,
+  7 => 118008761299,
+  8 => 149897172796
+}
+```
